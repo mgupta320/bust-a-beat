@@ -6,6 +6,7 @@
 #include "mpr121.h"
 #include "rtos.h"
 #include "wave_player.h"
+#include <algorithm>
 
 //Volume level
 BusOut myleds(LED1, LED2, LED3, LED4);
@@ -17,18 +18,18 @@ Speaker speaker2(p21);
 
 //Help guide recording if recording 
 //If not recording then show notes being played
-uLCD_4DGL uLCD(p28, p27, p29);
+uLCD_4DGL uLCD(p9, p10, p11);
 
 //Save recording and play recording from
 SDFileSystem sd(p5, p6, p7, p8, "sd");
 
 //Push button to switch instruments
-PinDetect pianoPB(p5);
-PinDetect synthPB(p6);
-PinDetect stringsPB(p7);
+PinDetect pianoPB(p19);
+PinDetect synthPB(p20);
+PinDetect stringsPB(p16);
 
 //Red LEDs to show current instrument
-BusOut redLEDs(p5, p6, p7);
+BusOut redLEDs(p22, p23, p24);
 
 // ======= INIT FOR TOUCH PAD =======
 // Create the interrupt receiver object on pin 26
@@ -38,7 +39,7 @@ InterruptIn interrupt(p26);
 Serial pc(USBTX, USBRX);
 
 // Setup the i2c bus on pins 28 and 27
-I2C i2c(p9, p10);
+I2C i2c(p28, p27);
 
 // Setup the Mpr121:
 // constructor(i2c object, i2c address of the mpr121)
@@ -46,7 +47,7 @@ Mpr121 mpr121(&i2c, Mpr121::ADD_VSS);
 // ======= INIT FOR TOUCH PAD =======
 
 //Bluetooth
-Serial bluemod(p13,p14);
+RawSerial bluemod(p13,p14);
 
 //Mutex Locks
 //uLCD
@@ -63,46 +64,83 @@ volatile int currInstr = PIANO;
 volatile int currState = STARTING;
 volatile int volume = 0.5;
 volatile int playback = PLAY;
+
+volatile int gridPosX = 0;
+volatile int gridPosY = 0;
 // ===== GLOBAL VARIABLES ======
 
+void fallInterrupt() {
+    int key_code=0;
+    int i=0;
+    int value=mpr121.read(0x00);
+    value +=mpr121.read(0x01)<<8;
+    for (i=0; i<12; i++) {
+        if (((value>>i)&0x01)==1) key_code=i+1;
+    }
+    switch (key_code) {
+        case 1: //Right
+            gridPosX = std::min(8, gridPosX + 1);
+            break;
+        case 4: //Up
+            gridPosY = std::max(8, gridPosY + 1);
+            break;
+        case 5: //Select
+            break;
+        case 6: //Down
+            gridPosY = std::min(0, gridPosY - 1);
+            break;
+        case 9: //Left
+            gridPosX = std::min(0, gridPosX - 1);
+            break;
+        default:
+            break;
+    }
+}
+
 void piano_hit_callback (void){  
-    myleds.write(0x04);
+    redLEDs.write(0x04);
     currInstr = PIANO;
 }
 
 void synth_hit_callback (void){  
-    myleds.write(0x02);
+    redLEDs.write(0x02);
     currInstr = SYNTH;
 }
 
 void strings_hit_callback (void){  
-    myleds.write(0x01);
+    redLEDs.write(0x01);
     currInstr = STRINGS;
 }
 
 void lcdThread(void const *args) {
     while(1) {
-        switch(currState) {
-            case STARTING:
-                break;
-            case IDLE:
-                break;
-            case PLAYING:
-                break;
-            case LOADING:
-                break;
-            case SAVING:
-                break;
-        }
+//        switch(currState) {
+//            case STARTING:
+//                stdio_mutex.lock();
+//                    uLCD.text_width(4);
+//                    uLCD.text_height(4);
+//                    uLCD.printf("Welcome to\n");
+//                    uLCD.printf("BUST A BEAT\n");
+//                stdio_mutex.unlock();
+//                break;
+//            case IDLE:
+//                break;
+//            case PLAYING:
+//                break;
+//            case LOADING:
+//                break;
+//            case SAVING:
+//                break;
+//        }
         Thread::wait(1000.0*0.2);
     }
 }
 
 void beatThread(void const *args) {
     while(1) {
-        if (currState == PLAYING) {
-            
-        }
+//        if (currState == PLAYING) {
+//            
+//        }
         Thread::wait(1000.0*0.2);
     }
 }
@@ -139,19 +177,29 @@ void blueToothThread(void const *args) {
                             currState = LOADING;
                             break;
                         case '5': //Volume Up
-                            volume += 0.1;
+                            volume = std::min(1.0, volume + 0.1);
                             break;
                         case '6': //Volume Down
-                            volume -= 0.1;
+                            volume = std::max(0.0, volume - 0.1);
                             break;
-                        case '7': //Number 3
+                        default:
                             break;
-                        case '8': //Number 3
-                            break;
-                    }
+                    }                    
                 }
             }
         }
+        if (volume >= 1) {
+            myleds.write(0x0F);    
+        } else if (volume >= 0.75) {
+            myleds.write(0x07);    
+        } else if (volume >= 0.50) {
+            myleds.write(0x03); 
+        } else if (volume >= 0.25) {
+            myleds.write(0x01); 
+        } else {
+            myleds.write(0x00);
+        }
+        myleds.write(0x0F);  
         Thread::wait(1000.0*0.2);
     }
 }
@@ -160,11 +208,17 @@ void init() {
     pianoPB.mode(PullUp);
     synthPB.mode(PullUp); 
     stringsPB.mode(PullUp); 
-    wait(0.1);
-    
+    interrupt.mode(PullUp);
+    wait(0.01);
+    pc.printf("I am here\n");
     pianoPB.attach_deasserted(&piano_hit_callback);
     synthPB.attach_deasserted(&synth_hit_callback);
     stringsPB.attach_deasserted(&strings_hit_callback);
+    interrupt.fall(&fallInterrupt);
+    
+    pianoPB.setSampleFrequency();
+    synthPB.setSampleFrequency();
+    stringsPB.setSampleFrequency();
     
     Thread thread2(lcdThread);
     Thread thread3(beatThread);
@@ -172,16 +226,11 @@ void init() {
     Thread thread5(blueToothThread);
 }
 
-void welcome() {
-    stdio_mutex.lock();  
-    stdio_mutex.unlock();
-    Thread::wait(1000.0*0.2);    
-}
-
 int main() {
     init();
-    welcome();
+    //Touchpad
+    currState = IDLE;
     while(1) {
-        
-    };
+        wait(0.2);
+    }
 }
