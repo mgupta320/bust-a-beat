@@ -7,6 +7,9 @@
 #include "rtos.h"
 #include "wave_player.h"
 #include <algorithm>
+#include "stdio.h"
+#include <string>
+#include "SongPlayer.h"
 
 //Volume level
 BusOut myleds(LED1, LED2, LED3, LED4);
@@ -44,15 +47,29 @@ I2C i2c(p28, p27);
 // Setup the Mpr121:
 // constructor(i2c object, i2c address of the mpr121)
 Mpr121 mpr121(&i2c, Mpr121::ADD_VSS);
+
+// Setup the first speaker for songplayer
+SongPlayer mySpeaker(p21);
+
+// Setup the second speaker for wave files
+AnalogOut DACout(p18);
+wave_player waver(&DACout);
 // ======= INIT FOR TOUCH PAD =======
 
 //Bluetooth
 RawSerial bluemod(p13,p14);
 
+//Threads
+Thread thread2;
+Thread thread3;
+Thread thread4;
+Thread thread5;
+
 //Mutex Locks
 //uLCD
 Mutex stdio_mutex;
 Mutex currState_mutex;
+Mutex currInstr_mutex;
 
 // ===== GLOBAL VARIABLES ======
 enum instr{PIANO, SYNTH, STRINGS};
@@ -60,13 +77,20 @@ enum state{STARTING, IDLE, PLAYING, LOADING, SAVING};
 enum playback{PAUSE, PLAY};
 
 //Check how many places change state -> be sure to add mutex
-volatile int currInstr = PIANO;
+string currInstr = "piano";
 volatile int currState = STARTING;
-volatile int volume = 0.5;
+volatile int volume = 1.0;
 volatile int playback = PLAY;
 
 volatile int gridPosX = 0;
 volatile int gridPosY = 0;
+
+string notes[8] = {"0", "0", "0", "0", "0", "0", "0", "0"};
+string beats[8] = {"0", "0", "0", "0", "0", "0", "0", "0"};
+string files[8];
+
+float note[1]= {100.0};
+float duration[1]= {0.1};
 // ===== GLOBAL VARIABLES ======
 
 void fallInterrupt() {
@@ -99,20 +123,20 @@ void fallInterrupt() {
 
 void piano_hit_callback (void){  
     redLEDs.write(0x04);
-    currInstr = PIANO;
+    currInstr = "piano";
 }
 
 void synth_hit_callback (void){  
     redLEDs.write(0x02);
-    currInstr = SYNTH;
+    currInstr = "synth";
 }
 
 void strings_hit_callback (void){  
     redLEDs.write(0x01);
-    currInstr = STRINGS;
+    currInstr = "strings";
 }
 
-void lcdThread(void const *args) {
+void lcdThread() {
     while(1) {
 //        switch(currState) {
 //            case STARTING:
@@ -136,7 +160,7 @@ void lcdThread(void const *args) {
     }
 }
 
-void beatThread(void const *args) {
+void beatThread() {
     while(1) {
 //        if (currState == PLAYING) {
 //            
@@ -145,16 +169,35 @@ void beatThread(void const *args) {
     }
 }
 
-void noteThread(void const *args) {
+void noteThread() {
+    pc.printf("in thread");
     while(1) {
+        pc.printf("in while");
+        currState = PLAYING;
         if (currState == PLAYING) {
-            
+            pc.printf("state is playing");
+            FILE * wav_file; //increase PWM clock rate for audio
+                while(true) {
+                    for (int i = 0; i < 8; i++) {
+                        currInstr_mutex.lock();
+                        files[i] = "/sd/BABNotes/" + currInstr + "/" + currInstr + "-0" + notes[i] + ".wav";
+                        currInstr_mutex.unlock();
+                        if (beats[i] == "1") {
+                            mySpeaker.PlaySong(note,duration,0.001);
+                        }
+                        char * tab2 = new char [files[i].length()+1];
+                        strcpy (tab2, files[i].c_str());
+                        wav_file = fopen(tab2, "r");
+                        waver.play(wav_file, volume);
+                        fclose(wav_file);
+                    }
+                }
         }
         Thread::wait(1000.0*0.2);
     }
 }
 
-void blueToothThread(void const *args) {
+void blueToothThread() {
     char bnum=0;
     char bhit=0;
     while(1) {
@@ -220,10 +263,37 @@ void init() {
     synthPB.setSampleFrequency();
     stringsPB.setSampleFrequency();
     
-    Thread thread2(lcdThread);
-    Thread thread3(beatThread);
-    Thread thread4(noteThread);
-    Thread thread5(blueToothThread);
+    string inputString;
+    FILE *fp = fopen("/sd/BABNotes/song.txt", "r");
+    if(fp == NULL) {
+        pc.printf("failed to open file");
+    } else {
+        int i = 0;
+        while (fscanf(fp,"%s", inputString)!= EOF) //reads in a string delineated by white space
+        { 
+            if (i < 8) {
+                notes[i] = inputString.c_str();
+            } else if (i < 15) {
+                beats[i-8] = inputString.c_str();
+            } 
+            i++;
+        }
+    }
+    fclose(fp);
+    
+    for (int i = 0; i < 8; i++) {
+        pc.printf(notes[i].c_str());
+    }
+    pc.printf("\n");
+    for (int i = 0; i < 8; i++) {
+        pc.printf(beats[i].c_str());
+    }
+    pc.printf("\n");
+    
+    thread2.start(lcdThread);
+    thread3.start(beatThread);
+    thread4.start(noteThread);
+    thread5.start(blueToothThread);
 }
 
 int main() {
