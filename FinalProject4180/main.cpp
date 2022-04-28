@@ -145,7 +145,6 @@ void strings_hit_callback (void){
 }
 
 void lcdThread() {
-    pc.printf("in lcd thread\n");
     while(1) {
         switch(currState) {
             case STARTING:
@@ -363,7 +362,6 @@ void lcdThread() {
 }
 
 void noteThread() {
-    pc.printf("in note thread\n");
     while(1) {
         if (currState == PLAYING) {
             FILE * wav_file; //increase PWM clock rate for audio
@@ -377,7 +375,6 @@ void noteThread() {
                     if (curr_beat == "1") {
                         mySpeaker.PlaySong(note,duration,volume/500.0);
                     }
-                    pc.printf(curr_note);
                     currInstr_mutex.lock();
                     if (raw_notes[i] != 0) {
                         files[i] = "/sd/BABNotes/" + currInstr + "/" + currInstr + "-0" + curr_note + ".wav";
@@ -404,7 +401,6 @@ void noteThread() {
 
 
 void blueToothThread() {
-    pc.printf("inside bluetooth thread \n");
     char bnum=0;
     char bhit=0;
     while(1) {
@@ -470,15 +466,6 @@ void blueToothThread() {
                                 currState_mutex.unlock();
                             }
                             fclose(fp);
-                            
-                            for (int i = 0; i < 8; i++) {
-                                pc.printf(notes[i].c_str());
-                            }
-                            pc.printf("\n");
-                            for (int i = 0; i < 8; i++) {
-                                pc.printf(beats[i].c_str());
-                            }
-                            pc.printf("\n");
                             break;
                         }
                         case '5': //Volume Up
@@ -541,7 +528,11 @@ int main() {
     while(1) {
         if (currState == LOADING || currState == SAVING) sdLED = 1;
         else sdLED = 0;
-        if (currState == IDLE && currPlayback == PLAY) currState = PLAYING;
+        if (currState == IDLE && currPlayback == PLAY){ 
+            currState_mutex.lock();
+            currState = PLAYING;
+            currState_mutex.unlock();
+        }
         Thread::wait(1000.0*0.2);
     }
 }
