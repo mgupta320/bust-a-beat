@@ -94,6 +94,8 @@ float note[1]= {100.0};
 float duration[1]= {0.1};
 // ===== GLOBAL VARIABLES ======
 
+using namespace std;
+
 void fallInterrupt() {
     int key_code=0;
     int i=0;
@@ -142,7 +144,8 @@ void strings_hit_callback (void){
     currInstr_mutex.unlock();
 }
 
-void lcdThread(void const *args) {
+void lcdThread() {
+    pc.printf("in lcd thread\n");
     while(1) {
         switch(currState) {
             case STARTING:
@@ -164,7 +167,7 @@ void lcdThread(void const *args) {
                 uLCD.line(0, (14*8), 127, (14*8), BLACK);
                 stdio_mutex.unlock();
                 currState_mutex.lock();
-                currState = PLAYING;
+                currState = IDLE;
                 currState_mutex.unlock();
                 break;
             case IDLE:
@@ -183,7 +186,6 @@ void lcdThread(void const *args) {
                         nextY2 = currY2;
                         break;
                     case P:  
-                        pc.printf("pressed");
                         nextX1 = currX1;
                         nextX2 = currX2;
                         nextY1 = currY1;
@@ -223,7 +225,6 @@ void lcdThread(void const *args) {
                 if (nextNote == P) {
                     if (gridPosY != 8) {
                         if (raw_notes[gridPosX] == gridPosY + 1) {
-                            pc.printf("cleared");
                             raw_notes[gridPosX] = 0;
                         } else if (raw_notes[gridPosX] != 0) {
                             int prevY1 = (raw_notes[gridPosX] - 1) * 14 + 1;
@@ -279,8 +280,10 @@ void lcdThread(void const *args) {
                     case PAUSE:
                         currX1 = currNotePos * 16;
                         currX2 = (currNotePos + 1) * 16;
+                        currNotePos = 0;
                         stdio_mutex.lock();
-                        uLCD.rectangle(currX1, 0, currX2, 126, BLUE);
+                        uLCD.rectangle(currX1, 0, currX2, 126, WHITE);
+                        uLCD.line(0, (14*8), 127, (14*8), BLACK);
                         stdio_mutex.unlock();
                         currState_mutex.lock();
                         currState = IDLE;
@@ -299,7 +302,6 @@ void lcdThread(void const *args) {
                         int currColor = LGREY;
                         int y = small_y * 14; 
                         if ((small_y + 1 == filled_note_row) || (small_y == 8  && filled_beat)) {
-                            pc.printf("%d, %d. \n", small_x, small_y);
                             currColor = RED;
                         } 
                         int currX1 = x;
@@ -361,33 +363,48 @@ void lcdThread(void const *args) {
 }
 
 void noteThread() {
-    pc.printf("in thread");
+    pc.printf("in note thread\n");
     while(1) {
-        pc.printf("in while");
         if (currState == PLAYING) {
-            pc.printf("state is playing");
             FILE * wav_file; //increase PWM clock rate for audio
-                while(currState == PLAYING) {
-                    for (int i = 0; i < 8; i++) {
-                        currInstr_mutex.lock();
-                        files[i] = "/sd/BABNotes/" + currInstr + "/" + currInstr + "-0" + notes[i] + ".wav";
-                        currInstr_mutex.unlock();
-                        if (beats[i] == "1") {
-                            mySpeaker.PlaySong(note,duration,volume/500.0);
-                        }
+            while(currState == PLAYING && currPlayback == PLAY) {
+                for (int i = 0; i < 8 && currPlayback == PLAY; i++) {
+                    currNotePos = i;
+                    char curr_beat[1];
+                    int n = sprintf(curr_beat, "%d", raw_beats[i]);
+                    char curr_note[1];
+                    int m = sprintf(curr_note, "%d", raw_notes[i]);
+                    if (curr_beat == "1") {
+                        mySpeaker.PlaySong(note,duration,volume/500.0);
+                    }
+                    pc.printf(curr_note);
+                    currInstr_mutex.lock();
+                    if (raw_notes[i] != 0) {
+                        files[i] = "/sd/BABNotes/" + currInstr + "/" + currInstr + "-0" + curr_note + ".wav";
                         char * tab2 = new char [files[i].length()+1];
                         strcpy (tab2, files[i].c_str());
                         wav_file = fopen(tab2, "r");
                         waver.play(wav_file, volume);
                         fclose(wav_file);
+                    } else {
+                        files[i] = "/sd/BABNotes/" + currInstr + "/" + currInstr + "-0" + "1" + ".wav";
+                        char * tab2 = new char [files[i].length()+1];
+                        strcpy (tab2, files[i].c_str());
+                        wav_file = fopen(tab2, "r");
+                        waver.play(wav_file, 0);
+                        fclose(wav_file);
                     }
+                    currInstr_mutex.unlock();
                 }
+            }
         }
-        Thread::wait(1000.0*0.2);
+    Thread::wait(1000.0*0.2);
     }
 }
 
+
 void blueToothThread() {
+    pc.printf("inside bluetooth thread \n");
     char bnum=0;
     char bhit=0;
     while(1) {
@@ -396,46 +413,61 @@ void blueToothThread() {
                 bnum = bluemod.getc(); //button number
                 bhit = bluemod.getc(); //1=hit, 0=release
                 if (bluemod.getc()==char(~('!' + 'B' + bnum + bhit))) {
-                    pc.printf("inside bluetooth");
+                    
                     switch (bnum) {
                         case '1': //Playback Start
-                        {   
-                            pc.printf("start");
+                        {   currState_mutex.lock();
                             currPlayback = PLAY;
+                            currState_mutex.unlock();
                             break;   
                         }
                         case '2': //Playback Stop
                         {
-                            pc.printf("stop");
+                            currState_mutex.lock();
                             currPlayback = PAUSE;
+                            currState_mutex.unlock();
                             break;
                         }
                         case '3': //Save recording
                         {
-                            pc.printf("save");
+                            FILE *fp = fopen("/sd/BABNotes/song.txt", "w"); //open SD
+                            if(fp == NULL) {
+                                error("Could not open file for write\n");
+                            }
+                            //fprintf(fp, "\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b");
+                            for (int i = 0; i < 8; i++) {
+                                fprintf(fp, "%d ", raw_notes[i]); // write SD
+                            }
+                            for (int i = 0; i < 8; i++) {
+                                fprintf(fp, "%d ", raw_beats[i]); // write SD
+                            }
+                            fclose(fp);
+                            currState_mutex.lock();
                             currState = SAVING;
+                            currState_mutex.unlock();
                             break;
                         }
                         case '4': //Load recording
                         {
-                            pc.printf("load");
                             string inputString;
-                            currState = LOADING;
-                            pc.printf("Inside");
                             FILE *fp = fopen("/sd/BABNotes/song.txt", "r");
                             if(fp == NULL) {
-                                pc.printf("failed to open file");
                             } else {
                                 int i = 0;
                                 while (fscanf(fp,"%s", inputString)!= EOF) //reads in a string delineated by white space
                                 { 
                                     if (i < 8) {
                                         notes[i] = inputString.c_str();
+                                        raw_notes[i] = notes[i].c_str()[0] - '0';
                                     } else if (i < 15) {
                                         beats[i-8] = inputString.c_str();
+                                        raw_beats[i-8] = beats[i-8].c_str()[0] - '0';
                                     } 
                                     i++;
                                 }
+                                currState_mutex.lock();
+                                currState = LOADING;
+                                currState_mutex.unlock();
                             }
                             fclose(fp);
                             
@@ -447,20 +479,15 @@ void blueToothThread() {
                                 pc.printf(beats[i].c_str());
                             }
                             pc.printf("\n");
-                            currState = IDLE;
                             break;
                         }
                         case '5': //Volume Up
                         {
-                            pc.printf("Up");
-                            pc.printf("Before %f", volume);
                             volume = std::min(1.0, volume + 0.05);
                             break;
                         }
                         case '6': //Volume Down
                         {
-                            pc.printf("Down");
-                            pc.printf("Before %f", volume);
                             volume = std::max(0.0, volume - 0.05);
                             break;
                         }
