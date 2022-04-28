@@ -70,18 +70,24 @@ Mutex currInstr_mutex;
 enum instr{PIANO, SYNTH, STRINGS};
 enum state{STARTING, IDLE, PLAYING, LOADING, SAVING};
 enum playback{PAUSE, PLAY};
+enum state2{S, L, R, U, D, P};
 
 //Check how many places change state -> be sure to add mutex
 string currInstr = "piano";
 volatile int currState = STARTING;
 volatile float volume = 0.5;
 volatile int currPlayback = PAUSE;
+volatile int nextNote = S;
+volatile int currNotePos = 0;
+volatile bool flash = false;
 
 volatile int gridPosX = 0;
 volatile int gridPosY = 0;
 
 string notes[8] = {"0", "0", "0", "0", "0", "0", "0", "0"};
 string beats[8] = {"0", "0", "0", "0", "0", "0", "0", "0"};
+int raw_notes[8]={0,0,0,0,0,0,0,0};
+int raw_beats[8]={0,0,0,0,0,0,0,0};
 string files[8];
 
 float note[1]= {100.0};
@@ -96,23 +102,22 @@ void fallInterrupt() {
     for (i=0; i<12; i++) {
         if (((value>>i)&0x01)==1) key_code=i+1;
     }
-    switch (key_code) {
-        case 1: //Right
-            gridPosX = std::min(8, gridPosX + 1);
-            break;
-        case 4: //Up
-            gridPosY = std::max(8, gridPosY + 1);
-            break;
-        case 5: //Select
-            break;
-        case 6: //Down
-            gridPosY = std::min(0, gridPosY - 1);
-            break;
-        case 9: //Left
-            gridPosX = std::min(0, gridPosX - 1);
-            break;
-        default:
-            break;
+    if ((key_code == 2) && (gridPosX < 7)) {
+        //Right
+        nextNote = R;
+    } else if ((key_code == 7) && (gridPosY < 8)) {
+        //Down
+        nextNote = D;
+    } else if (key_code == 6){
+        nextNote = P;
+    } else if (key_code == 5 && gridPosY > 0){
+        //Up
+        nextNote = U;
+    } else if (key_code == 10 && gridPosX > 0) {
+        //Left
+        nextNote = L;
+    } else {
+        nextNote = S;
     }
 }
 
@@ -137,28 +142,222 @@ void strings_hit_callback (void){
     currInstr_mutex.unlock();
 }
 
-void lcdThread() {
+void lcdThread(void const *args) {
     while(1) {
-//        switch(currState) {
-//            case STARTING:
-//                stdio_mutex.lock();
-//                    uLCD.text_width(4);
-//                    uLCD.text_height(4);
-//                    uLCD.printf("Welcome to\n");
-//                    uLCD.printf("BUST A BEAT\n");
-//                stdio_mutex.unlock();
-//                break;
-//            case IDLE:
-//                break;
-//            case PLAYING:
-//                break;
-//            case LOADING:
-//                break;
-//            case SAVING:
-//                break;
-//        }
+        switch(currState) {
+            case STARTING:
+                for (int x = 0; x < 128; x = x + 16)
+                {
+                    for (int y = 0; y < 128; y = y + 14)
+                    {
+                        int currX1 = x;
+                        int currX2 = x + 16;
+                        int currY1 = y;
+                        int currY2 = y + 14;
+                        stdio_mutex.lock();
+                        uLCD.rectangle(currX1, currY1, currX2, currY2, WHITE);
+                        uLCD.filled_rectangle((currX1 + 1), (currY1+1), (currX2-1), (currY2-1), LGREY);
+                        stdio_mutex.unlock();
+                    }
+                }
+                stdio_mutex.lock();
+                uLCD.line(0, (14*8), 127, (14*8), BLACK);
+                stdio_mutex.unlock();
+                currState_mutex.lock();
+                currState = PLAYING;
+                currState_mutex.unlock();
+                break;
+            case IDLE:
+                int currX1 = gridPosX * 16 + 1;
+                int currX2 = (gridPosX + 1) * 16 - 1;
+                int currY1 = gridPosY * 14 + 1;
+                int currY2 = (gridPosY + 1) * 14 - 1;
+                int nextX1, nextX2, nextY1, nextY2;
+                int newGridPosX = gridPosX;
+                int newGridPosY = gridPosY;
+                switch (nextNote){
+                    case S:  
+                        nextX1 = currX1;
+                        nextX2 = currX2;
+                        nextY1 = currY1;
+                        nextY2 = currY2;
+                        break;
+                    case P:  
+                        pc.printf("pressed");
+                        nextX1 = currX1;
+                        nextX2 = currX2;
+                        nextY1 = currY1;
+                        nextY2 = currY2;
+                        break;
+                    case U:
+                        nextX1 = currX1;
+                        nextX2 = currX2;
+                        nextY1 = currY1 - 14;
+                        nextY2 = currY2 - 14;
+                        newGridPosY = gridPosY - 1;
+                        break;
+                    case D:
+                        nextX1 = currX1;
+                        nextX2 = currX2;
+                        nextY1 = currY1 + 14;
+                        nextY2 = currY2 + 14;
+                        newGridPosY = gridPosY + 1;
+                        break;
+                    case L:
+                        nextX1 = currX1 - 16;
+                        nextX2 = currX2 - 16;
+                        nextY1 = currY1;
+                        nextY2 = currY2;
+                        newGridPosX = gridPosX - 1;
+                        break;
+                    case R:
+                        nextX1 = currX1 + 16;
+                        nextX2 = currX2 + 16;
+                        nextY1 = currY1;
+                        nextY2 = currY2;
+                        newGridPosX = gridPosX + 1;
+                        break;
+                        
+                }
+                int currColor = LGREY;
+                if (nextNote == P) {
+                    if (gridPosY != 8) {
+                        if (raw_notes[gridPosX] == gridPosY + 1) {
+                            pc.printf("cleared");
+                            raw_notes[gridPosX] = 0;
+                        } else if (raw_notes[gridPosX] != 0) {
+                            int prevY1 = (raw_notes[gridPosX] - 1) * 14 + 1;
+                            int prevY2 = raw_notes[gridPosX] * 14 - 1;
+                            uLCD.filled_rectangle(currX1, prevY1, currX2, prevY2, LGREY);
+                            currColor = RED;
+                            raw_notes[gridPosX] = gridPosY + 1;
+                        } else {
+                            currColor = RED;
+                            raw_notes[gridPosX] = gridPosY + 1;
+                        }
+                    } else {
+                        raw_beats[gridPosX] = (raw_beats[gridPosX] + 1) % 2;
+                        if (raw_beats[gridPosX] == 1) {
+                           currColor = RED;
+                        }
+                    } 
+                } else if ((raw_notes[gridPosX] == gridPosY + 1) || (gridPosY == 8 && raw_beats[gridPosX] == 1))  {
+                    currColor = RED;
+                }
+                gridPosX = newGridPosX;
+                gridPosY = newGridPosY;        
+                
+                stdio_mutex.lock();
+                uLCD.filled_rectangle(currX1, currY1, currX2, currY2, currColor);
+                if (flash) {
+                    uLCD.filled_rectangle(nextX1, nextY1, nextX2, nextY2, DGREY);                    
+                }
+                stdio_mutex.unlock();
+                flash = !flash;
+                nextNote = S;
+                break;
+            case PLAYING:
+                switch(currPlayback){
+                    int currX1, currX2, prevX1, prevX2;
+                    case PLAY:
+                        if (currNotePos == 0) {
+                            prevX1 = 112;
+                            prevX2 = 128;
+                        } else {
+                            prevX1 = (currNotePos - 1) * 16;
+                            prevX2 = currNotePos * 16;
+                        }
+                        currX1 = currNotePos * 16;
+                        currX2 = (currNotePos + 1) * 16;
+                        stdio_mutex.lock();
+                        uLCD.rectangle(prevX1, 0, prevX2, 126, WHITE);
+                        uLCD.line(0, (14*8), 127, (14*8), BLACK);
+                        uLCD.rectangle(currX1, 0, currX2, 126, BLUE);
+                        stdio_mutex.unlock();
+                        break;
+            
+                    case PAUSE:
+                        currX1 = currNotePos * 16;
+                        currX2 = (currNotePos + 1) * 16;
+                        stdio_mutex.lock();
+                        uLCD.rectangle(currX1, 0, currX2, 126, BLUE);
+                        stdio_mutex.unlock();
+                        currState_mutex.lock();
+                        currState = IDLE;
+                        currState_mutex.unlock();
+                        break;
+                }
+                break;
+            case LOADING:
+                for (int small_x = 0; small_x < 8; small_x++)
+                {
+                    int filled_note_row = raw_notes[small_x];
+                    int filled_beat = raw_beats[small_x];
+                    int x = small_x * 16; 
+                    for (int small_y = 0; small_y < 9; small_y++)
+                    {
+                        int currColor = LGREY;
+                        int y = small_y * 14; 
+                        if ((small_y + 1 == filled_note_row) || (small_y == 8  && filled_beat)) {
+                            pc.printf("%d, %d. \n", small_x, small_y);
+                            currColor = RED;
+                        } 
+                        int currX1 = x;
+                        int currX2 = x + 16;
+                        int currY1 = y;
+                        int currY2 = y + 14;
+                        
+                        stdio_mutex.lock();
+                        uLCD.rectangle(currX1, currY1, currX2, currY2, WHITE);
+                        uLCD.filled_rectangle((currX1 + 1), (currY1+1), (currX2-1), (currY2-1), currColor);
+                        stdio_mutex.unlock();
+                    }
+                }
+                stdio_mutex.lock();
+                uLCD.line(0, (14*8), 127, (14*8), BLACK);
+                stdio_mutex.unlock();
+                currState_mutex.lock();
+                currState = IDLE;
+                currState_mutex.unlock();
+                break;
+            case SAVING:
+                for (int x = 0; x < 128; x = x + 16)
+                {
+                    for (int y = 0; y < 128; y = y + 14)
+                    {
+                        int currX1 = x;
+                        int currX2 = x + 16;
+                        int currY1 = y;
+                        int currY2 = y + 14;
+                        stdio_mutex.lock();
+                        uLCD.rectangle(currX1, currY1, currX2, currY2, RED);
+                        stdio_mutex.unlock();
+                    }
+                }
+                for (int x = 0; x < 128; x = x + 16)
+                {
+                    for (int y = 0; y < 128; y = y + 14)
+                    {
+                        int currX1 = x;
+                        int currX2 = x + 16;
+                        int currY1 = y;
+                        int currY2 = y + 14;
+                        stdio_mutex.lock();
+                        uLCD.rectangle(currX1, currY1, currX2, currY2, WHITE);
+                        stdio_mutex.unlock();
+                    }
+                }
+                stdio_mutex.lock();
+                uLCD.line(0, (14*8), 127, (14*8), BLACK);
+                stdio_mutex.unlock();
+                currState_mutex.lock();
+                currState = IDLE;
+                currState_mutex.unlock();
+                break;
+        }
         Thread::wait(1000.0*0.2);
     }
+    
 }
 
 void noteThread() {
