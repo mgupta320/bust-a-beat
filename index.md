@@ -1,37 +1,20 @@
-## Welcome to GitHub Pages
+# The Bust-A-Beat Soundboard
+## About
+The Bust-A-Beat Soundboard is an intuitive soundboard that can be used to create, play, and save simple songs made using an mBED LPC1768 development board for computing along with several other parts used for tasks from song display, saving/loading music, and, most importantly, playing some tunes.
 
-You can use the [editor on GitHub](https://github.com/mgupta320/bust-a-beat/edit/gh-pages/index.md) to maintain and preview the content for your website in Markdown files.
+This website documents the hardware and software used to create this project so that you might be able to make your own Bust-A-Beat.
 
-Whenever you commit to this repository, GitHub Pages will run [Jekyll](https://jekyllrb.com/) to rebuild the pages in your site, from the content in your Markdown files.
+## Hardware
+### Summary
 
-### Markdown
+|   Hardware Accessory   | Purpose                      |
+|:-----------------------|:-----------------------------|
+| mBED                   | Microcontroller for system   |
+| Pushbuttons and LEDs   | Picking soundboard intrument |
+| Touchpad Sensor        | Picking notes to play        |
+| Color LCD Screen       | Displaying notes             |
+| MicroSD Card System    | Saving and loading songs     |
+| Speakers and Amplifier | Playing music                |
+| Bluetooth Module       | Connecting with your phone   |
 
-Markdown is a lightweight and easy-to-use syntax for styling your writing. It includes conventions for
-
-```markdown
-Syntax highlighted code block
-
-# Header 1
-## Header 2
-### Header 3
-
-- Bulleted
-- List
-
-1. Numbered
-2. List
-
-**Bold** and _Italic_ and `Code` text
-
-[Link](url) and ![Image](src)
-```
-
-For more details see [Basic writing and formatting syntax](https://docs.github.com/en/github/writing-on-github/getting-started-with-writing-and-formatting-on-github/basic-writing-and-formatting-syntax).
-
-### Jekyll Themes
-
-Your Pages site will use the layout and styles from the Jekyll theme you have selected in your [repository settings](https://github.com/mgupta320/bust-a-beat/settings/pages). The name of this theme is saved in the Jekyll `_config.yml` configuration file.
-
-### Support or Contact
-
-Having trouble with Pages? Check out our [documentation](https://docs.github.com/categories/github-pages-basics/) or [contact support](https://support.github.com/contact) and we’ll help you sort it out.
+### Pin Connections for Hardware Accessories
