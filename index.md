@@ -18,3 +18,14 @@ This website documents the hardware and software used to create this project so 
 | Bluetooth Module       | Connecting with your phone   |
 
 ### Pin Connections for Hardware Accessories
+#### [Pushbuttons](https://os.mbed.com/users/4180_1/notebook/pushbuttons/) and LED's
+3 pushbuttons are used in conjunction with 3 red LED's to choose and indicate the instrument (piano, synthesizer, and strings) the soundboard will emulate. 
+
+Pushbuttons must have a Pullup, either internally or externally. We chose an internal software Pullup for our pushbuttons. Pushbuttons are then connected as DigitalIn's for the mBed. On the other hand, LED's are wired in series with a resistor and connected to the mBed as a BusOut. 
+
+| Instrument | Pushbutton Pin | LED Pin |
+|:-----------|:---------------|:--------|
+| Piano      | P19            | P22     |
+| Synth      | P20            | P23     |
+| Strings    | P16            | P24     |
+
