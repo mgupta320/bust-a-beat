@@ -510,7 +510,7 @@ void init() {
 int main() {
     init();
     wait(2);
-    currState = IDLE;
+    currState = STARTING;
     while(1) {
         if (currState == LOADING || currState == SAVING) sdLED = 1;
         else sdLED = 0;
