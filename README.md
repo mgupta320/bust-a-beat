@@ -1,4 +1,4 @@
-## Welcome to GitHub Pages
+## ECE4180 Final Project - Mehul Gupta, Marko Stepniczka, Javen Ho
 
 You can use the [editor on GitHub](https://github.com/mgupta320/bust-a-beat/edit/main/README.md) to maintain and preview the content for your website in Markdown files.
 
