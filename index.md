@@ -86,7 +86,7 @@ Both speakers connect to class D audio amplifiers. One speaker plays musical not
 |                          | OUT-      | -      |                 |
 
 #### [Bluetooth Module](https://os.mbed.com/users/4180_1/notebook/adafruit-bluefruit-le-uart-friend---bluetooth-low-/)
-The bluetooth module is used for getting directions from a users phone. The user can control volume, play/pause music, and save/load music from the SD card.
+The bluetooth module is used for getting directions from a users phone. The user can control volume, play/pause music, and save/load music from the SD card. As volume is changed, mBED onboard LED's change to reflect volume as well.
 
 The bluetooth module communicates with the mBED using a RawSerial protocol. Pin connections are summarized below.
 
@@ -691,4 +691,7 @@ int main() {
 ## Examples and Demonstration
 ### Examples
 The following are pictures of the individual hardware accessories and how they should appear after being wired and connected to the mBED.
-![LCD Screen](/assets/images/LCD.jpg)
+
+![LCD Screen](/assets/images/LCD.jpg) ![Bluetooth Module](/assets/image/bluetooth.jpg)  ![External Power Supply](/assets/image/powerBrick.jpg)
+![Pushbuttons and LEDs](/assets/image/pushbuttonsAndLEDS.jpg) ![SD Card System](/assets/image/sdCard.jpg) ![Speakers and Amplifiers](/assets/image/speakersAndDrivers.jpg)
+ ![Volume LEDs](/assets/image/volume.jpg) ![Touchpad Sensors](/assets/image/touchpad.jpg)
