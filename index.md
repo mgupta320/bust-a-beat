@@ -55,3 +55,17 @@ The LCD screen uses a Serial interface to communicate and connects to the mBED u
 | P9   | TX        |                 |
 | P10  | RX        |                 |
 | P11  | Reset     |                 |
+
+#### [MicroSD Card System](https://os.mbed.com/cookbook/SD-Card-File-System)
+The microSD card system is used to save songs after they are constructed and to load songs that have been saved. Only one song can be saved to/loaded from memory at a time.
+
+The breakout board used for communicating with the SD card system utlizes an SPI interface to communicate with the mBED. 
+
+|    mBED     | SD Breakout Board |
+|:------------|:------------------|
+| P8          | CS                |
+| P5          | DI                |
+| Vout (3.3V) | Vcc               |
+| P7          | SCK               |
+| GND         | GND               |
+| P6          | DO                |
