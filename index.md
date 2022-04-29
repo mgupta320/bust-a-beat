@@ -7,6 +7,7 @@ This website documents the hardware and software used to create this project so 
 ## Hardware
 ### Summary
 The hardware accessories used and their general purpose are summarized here:
+
 |   Hardware Accessory   | Purpose                      |
 |:-----------------------|:-----------------------------|
 | mBED                   | Microcontroller for system   |
