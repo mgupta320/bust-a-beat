@@ -693,10 +693,17 @@ int main() {
 The following are pictures of the individual hardware accessories and how they should appear after being wired and connected to the mBED.
 
 ![LCD Screen](/assets/images/LCD.jpg)
+
 ![Bluetooth Module](/assets/image/bluetooth.jpg) 
+
 ![External Power Supply](/assets/image/powerBrick.jpg)
+
 ![Pushbuttons and LEDs](/assets/image/pushbuttonsAndLEDS.jpg)
+
 ![SD Card System](/assets/image/sdCard.jpg)
+
 ![Speakers and Amplifiers](/assets/image/speakersAndDrivers.jpg)
+
 ![Volume LEDs](/assets/image/volume.jpg)
+
 ![Touchpad Sensors](/assets/image/touchpad.jpg)
