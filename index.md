@@ -83,3 +83,15 @@ Both speakers connect to class D audio amplifiers. One speaker plays musical not
 |                          | OUT+      | +      |                 |
 |                          | OUT-      | -      |                 |
 
+#### [Bluetooth Module](https://os.mbed.com/users/4180_1/notebook/adafruit-bluefruit-le-uart-friend---bluetooth-low-/)
+The bluetooth module is used for getting directions from a users phone. The user can control volume, play/pause music, and save/load music from the SD card.
+
+The bluetooth module communicates with the mBED using a RawSerial protocol. Pin connections are summarized below.
+
+| mBED | BT Module | External Supply |
+|:-----|:----------|:----------------|
+| GND  | GND       | GND             |
+|      | Vin       | 5V              |
+| GND  | CTS       |                 |
+| P14  | TXO       |                 |
+| P13  | RXI       |                 |
