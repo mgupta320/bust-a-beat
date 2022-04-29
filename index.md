@@ -59,7 +59,7 @@ The LCD screen uses a Serial interface to communicate and connects to the mBED u
 #### [MicroSD Card System](https://os.mbed.com/cookbook/SD-Card-File-System)
 The microSD card system is used to save songs after they are constructed and to load songs that have been saved. Only one song can be saved to/loaded from memory at a time.
 
-The breakout board used for communicating with the SD card system utlizes an SPI interface to communicate with the mBED. 
+The breakout board used for communicating with the SD card system utlizes an SPI interface to communicate with the mBED. The pin connections are summarized below.
 
 |    mBED     | SD Breakout Board |
 |:------------|:------------------|
@@ -69,3 +69,17 @@ The breakout board used for communicating with the SD card system utlizes an SPI
 | P7          | SCK               |
 | GND         | GND               |
 | P6          | DO                |
+
+#### [Speakers](https://os.mbed.com/users/4180_1/notebook/using-a-speaker-for-audio-output/) and [Amplifiers](https://www.sparkfun.com/products/11044)
+The speakers are used to play the music that is being made. 
+
+Both speakers connect to class D audio amplifiers. One speaker plays musical notes using AnalogOut while the other plays the beats using PWM. They both connect to the external power supply rather than the mBED Vout. Pin Connectiions are summarized below.
+
+|           mBED           | Amplifier | Speaker| External Supply |
+|:-------------------------|:----------|:-------|:----------------|
+| GND                      | PWR-, IN- |        | GND             |
+|                          | PWR+      |        | 5V              |
+| P21 (Beats), P18 (Notes) | IN+       |        |                 |
+|                          | OUT+      | +      |                 |
+|                          | OUT-      | -      |                 |
+
