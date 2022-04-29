@@ -6,7 +6,7 @@ This website documents the hardware and software used to create this project so 
 
 ## Hardware
 ### Summary
-
+The hardware accessories used and their general purpose are summarized here:
 |   Hardware Accessory   | Purpose                      |
 |:-----------------------|:-----------------------------|
 | mBED                   | Microcontroller for system   |
@@ -17,6 +17,9 @@ This website documents the hardware and software used to create this project so 
 | Speakers and Amplifier | Playing music                |
 | Bluetooth Module       | Connecting with your phone   |
 | External Power Supply  | Used to power accessories    |
+
+The block diagram summarizing the pin connections is shown below:
+![Block Diagram](/assets/images/PinOut.jpeg)
 
 ### Hardware Accessories Further Explained
 #### [Pushbuttons](https://os.mbed.com/users/4180_1/notebook/pushbuttons/) and LED's
@@ -691,19 +694,23 @@ int main() {
 ## Examples and Demonstration
 ### Examples
 The following are pictures of the individual hardware accessories and how they should appear after being wired and connected to the mBED.
-
+LCD screen as notes are playing:
 ![LCD Screen](/assets/images/LCD.jpg)
-
+Bluetooth module communicating with phone:
 ![Bluetooth Module](/assets/images/bluetooth.jpg) 
-
+External power supply connected to circuit board: 
 ![External Power Supply](/assets/images/powerBrick.jpg)
-
-![Pushbuttons and LEDs](/assets/images/pushbuttonsAndLEDS.jpg)
-
+Pushbutton and LEDs indicating the piano instrument:
+![Pushbuttons and LEDs](/assets/images/pushbuttonsAndLEDs.jpg)
+SD Card breakout board connected to mBED:
 ![SD Card System](/assets/images/sdCard.jpg)
-
+Speakers with class D amplifiers:
 ![Speakers and Amplifiers](/assets/images/speakersAndDrivers.jpg)
-
+LEDs on mBED displaying volume level:
 ![Volume LEDs](/assets/images/volume.jpg)
-
+Touchpad with labelled directions on buttons:
 ![Touchpad Sensors](/assets/images/touchpad.jpg)
+
+### Video demonstration
+[![Video Demonstration Thumbnail](http://img.youtube.com/vi/L40URunmHDw/0.jpg)](http://www.youtube.com/watch?v=L40URunmHDw "Video Title")
+
