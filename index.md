@@ -691,4 +691,4 @@ int main() {
 ## Examples and Demonstration
 ### Examples
 The following are pictures of the individual hardware accessories and how they should appear after being wired and connected to the mBED.
-![LCD Screen](/assets/LCD.jpg)
+![LCD Screen](/assets/images/LCD.jpg)
