@@ -692,7 +692,7 @@ int main() {
 ### Examples
 The following are pictures of the individual hardware accessories and how they should appear after being wired and connected to the mBED.
 
-![LCD Screen](/assets/images/LCD.jpg | width=100)
+![LCD Screen](/assets/images/LCD.jpg)
 
 ![Bluetooth Module](/assets/images/bluetooth.jpg) 
 
