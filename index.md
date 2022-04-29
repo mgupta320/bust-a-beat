@@ -2,7 +2,7 @@
 ## About
 The Bust-A-Beat Soundboard is an intuitive soundboard that can be used to create, play, and save simple songs made using an mBED LPC1768 development board for computing along with several other parts used for tasks from song display, saving/loading music, and, most importantly, playing some tunes.
 
-This website documents the hardware and software used to create this project so that you might be able to make your own Bust-A-Beat.
+This website documents the hardware and software used to create this project so that you might be able to make your own Bust-A-Beat. At the end of the documentation, it also displays some pictures and a video of what the final system should look and function like.
 
 ## Hardware
 ### Summary
@@ -16,6 +16,7 @@ This website documents the hardware and software used to create this project so 
 | MicroSD Card System    | Saving and loading songs     |
 | Speakers and Amplifier | Playing music                |
 | Bluetooth Module       | Connecting with your phone   |
+| External Power Supply  | Used to power accessories    |
 
 ### Hardware Accessories Further Explained
 #### [Pushbuttons](https://os.mbed.com/users/4180_1/notebook/pushbuttons/) and LED's
@@ -42,3 +43,15 @@ The touchpad uses an I2C to communicate and is thusly wired with the mBED. The I
 | P26         | IRQ      |                           |
 | Vout (3.3V) | Vcc      |                           |
 
+#### [LCD Screen](https://os.mbed.com/users/4180_1/notebook/ulcd-144-g2-128-by-128-color-lcd/)
+The LCD screen is used to display the individual notes in the song as it is being created, saved, loaded, and played. 
+
+The LCD screen uses a Serial interface to communicate and connects to the mBED using a cable. and is also connected to the external supply for power. The pin connections using the cable and external power supply are summarized below.
+
+| mBED | LCD Cable | External Supply |
+|:-----|:----------|:----------------|
+|      | 5V        | 5V              |
+| GND  | GND       | GND             |
+| P9   | TX        |                 |
+| P10  | RX        |                 |
+| P11  | Reset     |                 |
