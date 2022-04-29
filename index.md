@@ -694,16 +694,16 @@ The following are pictures of the individual hardware accessories and how they s
 
 ![LCD Screen](/assets/images/LCD.jpg)
 
-![Bluetooth Module](/assets/image/bluetooth.jpg) 
+![Bluetooth Module](/assets/images/bluetooth.jpg) 
 
-![External Power Supply](/assets/image/powerBrick.jpg)
+![External Power Supply](/assets/images/powerBrick.jpg)
 
-![Pushbuttons and LEDs](/assets/image/pushbuttonsAndLEDS.jpg)
+![Pushbuttons and LEDs](/assets/images/pushbuttonsAndLEDS.jpg)
 
-![SD Card System](/assets/image/sdCard.jpg)
+![SD Card System](/assets/images/sdCard.jpg)
 
-![Speakers and Amplifiers](/assets/image/speakersAndDrivers.jpg)
+![Speakers and Amplifiers](/assets/images/speakersAndDrivers.jpg)
 
-![Volume LEDs](/assets/image/volume.jpg)
+![Volume LEDs](/assets/images/volume.jpg)
 
-![Touchpad Sensors](/assets/image/touchpad.jpg)
+![Touchpad Sensors](/assets/images/touchpad.jpg)
